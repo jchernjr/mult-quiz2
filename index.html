@@ -138,7 +138,7 @@
     <div id="game-container">
         <div id="stars"></div>
         <img id="rocket" src="https://upload.wikimedia.org/wikipedia/commons/e/e5/Rocket-emoji.png" alt="Rocket">
-        <div class="flame"></div>
+        <div class="flame" id="flame"></div>
         <div id="energy-bar-container">
             <div id="energy-bar"></div>
         </div>
@@ -174,15 +174,19 @@
         let energy = 100;
         let score = 0, correctCount = 0, incorrectCount = 0;
         let drainSpeed = 500;
+        let gameOver = false;
         let currentQuestion = {};
         const energyBar = document.getElementById("energy-bar");
         const questionEl = document.getElementById("question");
         const inputBox = document.getElementById("input-box");
+        const flame = document.getElementById("flame");
 
         let factor1Min = 0, factor1Max = 12;
         let factor2Min = 0, factor2Max = 12;
 
         function updateEnergy(amount) {
+            if (gameOver) return;
+
             energy = Math.max(0, Math.min(100, energy + amount));
             energyBar.style.height = energy + "%";
 
@@ -195,8 +199,9 @@
             }
 
             if (energy === 0) {
+                gameOver = true;
+                flame.style.display = "none";  // Stop exhaust animation
                 alert("Game Over! Try again.");
-                resetGame();
             }
         }
 
@@ -218,6 +223,8 @@
 
         inputBox.addEventListener("keyup", (event) => {
             if (event.key === "Enter") {
+                if (gameOver) return;
+
                 const userAnswer = parseInt(inputBox.value);
                 if (userAnswer === currentQuestion.answer) {
                     updateEnergy(15);
@@ -236,6 +243,12 @@
         });
 
         function updateSettings() {
+            if (gameOver) {
+                gameOver = false;
+                energy = 100;
+                flame.style.display = "block";  // Restart exhaust animation
+            }
+
             factor1Min = parseInt(document.getElementById("factor1-min").value);
             factor1Max = parseInt(document.getElementById("factor1-max").value);
             factor2Min = parseInt(document.getElementById("factor2-min").value);
@@ -245,8 +258,10 @@
         }
 
         function drainEnergy() {
-            updateEnergy(-1);
-            setTimeout(drainEnergy, drainSpeed);
+            if (!gameOver) {
+                updateEnergy(-1);
+                setTimeout(drainEnergy, drainSpeed);
+            }
         }
 
         drainEnergy();
