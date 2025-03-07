@@ -158,10 +158,11 @@
             </label>
             <br>
             <label>Difficulty:
-                <input type="range" id="difficulty-slider" min="1" max="5" value="3">
+                <input type="range" id="difficulty-slider" min="1" max="10" value="5" oninput="updateDifficultyDisplay()">
+                <span id="difficulty-value">5</span>
             </label>
             <br>
-            <button onclick="updateSettings()">Update</button>
+            <button onclick="newGame()">New Game</button>
         </div>
         <div id="scoreboard">
             <p>Score: <span id="score">0</span></p>
@@ -180,6 +181,7 @@
         const questionEl = document.getElementById("question");
         const inputBox = document.getElementById("input-box");
         const flame = document.getElementById("flame");
+        const difficultyValue = document.getElementById("difficulty-value");
 
         let factor1Min = 0, factor1Max = 12;
         let factor2Min = 0, factor2Max = 12;
@@ -191,17 +193,23 @@
             energyBar.style.height = energy + "%";
 
             if (energy > 80) {
-                energyBar.style.background = "green";
+                energyBar.style.background = "cyan";
             } else if (energy < 20) {
                 energyBar.style.background = "red";
+            } else if (energy < 40) {
+                energyBar.style.background = "orange";
             } else {
-                energyBar.style.background = "blue";
+                energyBar.style.background = "green";
             }
 
             if (energy === 0) {
                 gameOver = true;
                 flame.style.display = "none";  // Stop exhaust animation
-                alert("Game Over! Try again.");
+
+                // Update the ui BEFORE showing the alert dialog
+                setTimeout(() => {
+                    alert("Game Over! Try again.");
+                }, 500);
             }
         }
 
@@ -222,9 +230,7 @@
         }
 
         inputBox.addEventListener("keyup", (event) => {
-            if (event.key === "Enter") {
-                if (gameOver) return;
-
+            if (event.key === "Enter" && !gameOver) {
                 const userAnswer = parseInt(inputBox.value);
                 if (userAnswer === currentQuestion.answer) {
                     updateEnergy(15);
@@ -242,30 +248,45 @@
             }
         });
 
-        function updateSettings() {
-            if (gameOver) {
-                gameOver = false;
-                energy = 100;
-                flame.style.display = "block";  // Restart exhaust animation
-            }
+        function newGame() {
+            gameOver = false;
+            energy = 100;
+            score = 0;
+            correctCount = 0;
+            incorrectCount = 0;
+            flame.style.display = "block";
 
             factor1Min = parseInt(document.getElementById("factor1-min").value);
             factor1Max = parseInt(document.getElementById("factor1-max").value);
             factor2Min = parseInt(document.getElementById("factor2-min").value);
             factor2Max = parseInt(document.getElementById("factor2-max").value);
             drainSpeed = 1000 / parseInt(document.getElementById("difficulty-slider").value);
+
+            resetUICounters();
             generateQuestion();
+            drainEnergy(); // start energy draining loop
+        }
+
+        function resetUICounters() {
+            document.getElementById("score").textContent = score;
+            document.getElementById("correct").textContent = correctCount;
+            document.getElementById("incorrect").textContent = incorrectCount;
+            energyBar.style.height = "100%";
+        }
+
+        function updateDifficultyDisplay() {
+            difficultyValue.textContent = document.getElementById("difficulty-slider").value;
         }
 
         function drainEnergy() {
             if (!gameOver) {
                 updateEnergy(-1);
+                // Repeatedly call itself
                 setTimeout(drainEnergy, drainSpeed);
             }
         }
 
-        drainEnergy();
-        generateQuestion();
+        newGame();
     </script>
 
 </body>
